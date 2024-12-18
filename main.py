@@ -28,4 +28,16 @@ class Device:
         return f"Device {self.device_name} (Responsible: {self.responsible_person.name})"
 
 
+class Reservation:
+    def __init__(self, device_name, user_name, start_time, end_time):
+        self.device_name = device_name
+        self.user_name = user_name
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def __str__(self):
+        return
+
+
+
         
