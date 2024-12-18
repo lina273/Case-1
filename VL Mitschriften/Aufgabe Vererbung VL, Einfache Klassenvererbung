@@ -1,0 +1,18 @@
+class person():
+    def __init__(self, name, number, email):
+        self.name= name
+        self.number = number
+        self.email = email
+
+
+class adress():
+    def __init__(self, city, postalcode, country):
+    self.city = city
+    self.postcalcode = postalcode
+    self.country = country
+
+
+
+class student (person):
+
+

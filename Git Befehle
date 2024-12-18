@@ -1,0 +1,6 @@
+Neues Projekt
+git init
+git remote add origin <GitHub-URL>
+git add .
+git commit -m "Nachricht"
+git push origin master

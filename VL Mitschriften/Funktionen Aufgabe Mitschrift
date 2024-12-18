@@ -1,0 +1,11 @@
+my_persons = ["Julian", "Andreas", "Philipp", "Manuel"]
+my_person = "Andreas"
+
+def look_for_person(persons, person_to_look_for):
+  position = 0
+  for current_person in persons:
+    position = position + 1
+    if current_person == person_to_look_for:
+      print("Found person {} at position {}!".format(person_to_look_for, position))
+
+look_for_person(persons  = my_persons, person_to_look_for = my_person)

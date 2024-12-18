@@ -1,0 +1,31 @@
+print("Hallo")
+# Zeilenkommentar
+
+my_text = "Test" #string automaisch 
+my_text : str = "Test" #my_text soll ein string sein, ist aber nicht fest
+my_text = 1 #Integer, Variablen werden zur Laufzeit geändert, "Dynamic typing"
+my_text = 1.0 #float, automatisch 
+
+print(my_text)
+
+#Komplexe Zahlen: j, vorgegeben !
+
+my_variable = None #kein Inhalt, my_variable ist wie Platzhalter
+print("my_variable")
+
+my_tuple = (1,2,3)
+print(type(my_tuple))  #Ausgabe : < class 'tuple' >
+
+
+my_new_variable = str(my_text)
+print(my_new_variable)
+
+
+a = 1
+b = 2
+addition= a + b
+print("Das Ergebnis ist:" + str(addition))  #muss erst addition in string umwandeln, da nur string + string mit print geht
+print(type(addition)) #bleibt aber int, ist nur für ausgabe umgewandelt
+
+print("Das Ergebnis ist:", {addition})
+print("Das Ergebnis ist:", addition)

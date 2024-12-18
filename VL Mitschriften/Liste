@@ -1,0 +1,36 @@
+a_list = [1,"hallo", True, 5] #Datentyp egal
+print(a_list)
+
+empty_list = []
+
+print(a_list [1 : 3]) # das Dritte nicht mehr, FEHLERQUELLE
+
+a_list.append("Neues Element") #append hängt hinten an Liste dran
+
+print(a_list)
+
+
+
+#FOTO
+#my_favourite_food.coppy
+
+
+#Ausgaben Schleife: 
+
+my_list = [1,2,3]
+
+for index, number in enumerate(my_list):
+    print(number)
+    if number == 3:
+        print("Found it!")
+        print(f"the index is {index}")
+        break #Abbruch, gefunden 
+    print ("Gehe weiter")
+
+
+#peps python, um zu sehen wie schöner code geschrieben wird
+
+
+#sym_mylist / len_mylist
+
+#

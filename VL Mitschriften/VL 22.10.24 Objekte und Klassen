@@ -1,0 +1,50 @@
+
+
+class Roboter():
+
+    #Konstruktor 
+    def __init__(self, id : int, max_speed : float = 50.0, ): #__ heißt Dounder Methode, Doppel Underscore präfix, __innit__ ist eine Methode, die ausgeführt wird, wenn ein neuew Objekt einer Klasse erstellt wird 
+        print("Roboter created")
+        self.id_number = id
+        self.max_speed = max_speed
+        self.current_speed = 0
+        self.distance_to_wall = 10
+
+    #Methode mit Name
+    def communicate (self):
+        print("I am Robot and my ID is ", self.id_number)
+
+    def time_till_impact(self, current_speed : float):
+        if current_speed is None:
+            current_speed = self.max_speed
+        return self.distance_to_wall/current_speed
+
+
+    def communicate_with_time(self):
+        time = self.time_till_impact
+        self.communicate
+        print("I will hit the wall in ", time, " seconds")
+
+
+
+        
+
+#Instanz eines Objeketes einer Klasse erstellen
+r1 = Roboter (100, 30)
+r2 = Roboter (200)
+
+
+print(r1.id_number)
+print(f"Robot {r1.id_number} has max speed {r1.max_speed}")  #ausgabe im text
+print(r2.id_number, r2.max_speed) #mehrere attribute ausgeben lassen
+
+r1.max_speed = 30 #attribut ändern
+print(r1.max_speed)
+
+r2.communicate()
+
+r3 = Roboter (1,50.0)
+#time = r3.time_till_impact(200)
+#print(time)
+
+r3.communicate_with_time()

@@ -1,0 +1,45 @@
+class sensor ():
+
+    def __init__(self, id, name):
+     self.id = id
+     self.name = name 
+
+     self.last_measurement = None
+     self.list_of_measurements = []
+
+    def set_last_measurement(self, measurement):
+       self.last_measurement = measurement
+       self.list_of_measurements.append(measurement)
+
+    def calculate_mean_ (self):
+       return sum(self.list_of_measurements)/len (self.last_measurement)
+    
+
+    def print_mean():
+       pass
+
+
+class HeartRateSensor(sensor):
+   def __init__(self, id, name):
+      super().__init__(id,name)
+      self.hersteller = None
+
+if __name__ == "__main__":
+   normalsensor = sensor(1, "Temperatur")
+   normalsensor.set_last_measurement(20)
+   normalsensor.set_last_measurement(21)
+   normalsensor.set_last_measurement(22)
+
+   print(sensor.set_last_measurement)
+
+   hrs1= HeartRateSensor(1, "Puls_Sensor")
+   hrs1.set_last_measurement(190)
+   hrs1.set_last_measurement(120)
+
+   print(hrs1.set_last_measurement)
+
+
+
+
+
+
