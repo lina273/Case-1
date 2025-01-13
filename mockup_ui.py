@@ -1,4 +1,49 @@
 import streamlit as st
+from tinydb import TinyDB, Query
+from Modules.serializer import db
+from datetime import datetime
+import pandas as pd
+
+
+##Funktionen in seperate datei auslagern - Soukopf
+
+# Initialize database
+Device = Query()
+user_db = TinyDB('db/users.json')
+User = Query()
+
+def add_device(device_id, name, responsible_person, creation_date, status, image_url, device_type):
+    db.insert({
+        'id': device_id,
+        'name': name,
+        'responsible_person': responsible_person,
+        'creation_date': creation_date,
+        'status': status,
+        'image': image_url,
+        'type': device_type
+    })
+
+def get_devices_by_type(device_type):
+    return db.search(Device.type == device_type)
+
+def update_device_status(name, new_status):
+    db.update({'status': new_status}, Device.name == name)
+
+def get_all_users():
+    return user_db.all()
+
+def add_user(username, name, img_link):
+    user_db.insert({
+        'username': username,
+        'name': name,
+        'img_link': img_link
+    })
+
+def update_user(username, field, value):
+    user_db.update({field: value}, User.username == username)
+
+
+#State diagramm erstellen - Soukopf
 
 # Session state for login and user functionality
 if "logged_in" not in st.session_state:
@@ -6,15 +51,23 @@ if "logged_in" not in st.session_state:
 if "user_role" not in st.session_state:
     st.session_state.user_role = "guest"
 if "selected_type" not in st.session_state:
-    st.session_state.selected_type = "3D-Drucker" #Set 3D-Drucker as default
+    st.session_state.selected_type = "3D-Drucker" # Set 3D-Drucker as default
 if "selected_device" not in st.session_state:
     st.session_state.selected_device = None
+if "adding_device" not in st.session_state:
+    st.session_state.adding_device = False
+if "managing_users" not in st.session_state:
+    st.session_state.managing_users = False
 
 # General Login
-st.sidebar.title("Login")
+if st.sidebar.button("Geräteverwaltung"):
+            st.session_state.adding_device = False
+            st.session_state.selected_device = None
+            st.rerun()
+st.sidebar.button("Home")
 if not st.session_state.logged_in:
     username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password") #Login logik muss mit Datenbank verknüpft werden wenn wir jeden user login ermöglichen wollen (nicht gefordert soweit verstanden) - Soukopf
+    password = st.sidebar.text_input("Password", type="password")
     if st.sidebar.button("Login"):
         if username == "admin" and password == "admin":
             st.session_state.logged_in = True
@@ -27,21 +80,70 @@ if not st.session_state.logged_in:
 else:
     st.sidebar.success(f"Logged in as {st.session_state.user_role.capitalize()}")
     if st.session_state.user_role == "admin":
-        if st.sidebar.button("Admin Optionen"):
-            st.sidebar.write("Hier können Adminoptionen implementiert werden.")
-        if st.sidebar.button("Neuen Maschinentyp hinzufügen"):
-            st.sidebar.write("Maschinentyp hinzufügen-Funktionalität hier implementieren.")
+        if st.sidebar.button("Userverwaltung"):
+            st.session_state.managing_users = True
+
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.user_role = "guest"
 
 # Main Page Layout
-if st.session_state.selected_device is None:
+if st.session_state.managing_users:
+    st.title("Userverwaltung")
+
+    users = get_all_users()
+    user_df = pd.DataFrame(users)
+
+    if not user_df.empty:
+        edited_df = st.data_editor(user_df, key="user_editor")
+        for index, row in edited_df.iterrows():
+            for column in user_df.columns:
+                if row[column] != users[index].get(column):
+                    update_user(users[index]['username'], column, row[column])
+
+    st.subheader("Neuen Benutzer hinzufügen")
+    new_username = st.text_input("Username:")
+    new_name = st.text_input("Name:")
+    new_img_link = st.text_input("Bild-URL (1:1 Format):")
+
+    if st.button("Benutzer speichern"):
+        if new_username and new_name and new_img_link:
+            add_user(new_username, new_name, new_img_link)
+            st.success("Benutzer erfolgreich hinzugefügt!")
+            st.rerun()
+        else:
+            st.error("Bitte alle Felder ausfüllen.")
+
+    if st.button("Zurück"):
+        st.session_state.managing_users = False
+        st.rerun()
+elif st.session_state.adding_device:
+    st.title(f"Neues Gerät hinzufügen: {st.session_state.selected_type}")
+    device_id = st.text_input("ID:")
+    model = st.text_input("Model:")
+    responsible_person = st.selectbox("Verantwortliche Person:", [user['name'] for user in get_all_users()])
+    creation_date = st.date_input("Erstellungsdatum:", datetime.now())
+    status = st.selectbox("Status:", ["Aktiv", "Wartung", "Reserviert", "Defekt", "Standby"])
+    image_url = st.text_input("Bild-URL (1:1 Format):")
+
+    if st.button("Speichern"):
+        if not image_url:
+            st.error("Bild-URL darf nicht leer sein.")
+        else:
+            add_device(device_id, model, responsible_person, creation_date.strftime("%Y-%m-%d"), status, image_url, st.session_state.selected_type)
+            st.success("Gerät erfolgreich hinzugefügt!")
+            st.session_state.adding_device = False
+            st.rerun()
+
+    if st.button("Abbrechen"):
+        st.session_state.adding_device = False
+        st.rerun()
+elif st.session_state.selected_device is None:
     st.title("Geräteverwaltung")
 
     # Maschinentypen oben links
     st.subheader("Maschinentypen")
-    cols = st.columns(len(types := ["3D-Drucker", "Laser-Cutter", "Fräsmaschine"])) # nur testweise muss typen aus datenbank beziehen - Soukopf
+    cols = st.columns(len(types := ["3D-Drucker", "Laser-Cutter", "Fräsmaschine"]))
     for i, maschinentyp in enumerate(types):
         with cols[i]:
             if st.button(maschinentyp, key=f"type_{i}"):
@@ -50,28 +152,16 @@ if st.session_state.selected_device is None:
     # Maschinenanzeige als Felder
     st.subheader(f"Maschinenübersicht: {st.session_state.selected_type}")
 
-    # Beispielgeräte nach Typ gruppiert
-    all_devices = {
-        "3D-Drucker": [
-            {"name": "3D-Drucker 1", "image": "https://asset.conrad.com/media10/isa/160267/c1/-/de/003200727PI00/image.jpg?x=400&y=400&format=jpg&ex=400&ey=400&align=center", "status": "Aktiv"},
-            {"name": "3D-Drucker 2", "image": "https://3dee.at/wp-content/uploads/2022/09/creality-ender-3-tiny.png", "status": "Inaktiv"},
-        ],
-        "Laser-Cutter": [
-            {"name": "Laser-Cutter 1", "image": "https://omtechlaser.uk/cdn/shop/files/3_3485253b-573f-4169-b474-8b4a7d2abe3a.jpg?v=1716430665", "status": "Wartung"},
-            {"name": "Laser-Cutter 2", "image": "https://lotus-laser.sirv.com/WP_www.lotuslaser.com/2020/10/Lotus-Laser-Systems-Blu125-100w-laser-cutting-machine-scaled.webp", "status": "Aktiv"},
-        ],
-        "Fräsmaschine": [
-            {"name": "Fräsmaschine 1", "image": "https://www.holzmann-maschinen.at/uploadPim/199/001_bf1000ddro-400v-thumbnail-260-260.jpg", "status": "Aktiv"},
-        ],
-    } # Hier müssten die Geräte aus der Datenbank geladen werden - Soukopf
+    devices = get_devices_by_type(st.session_state.selected_type)
 
     columns = st.columns(4)
-    devices = all_devices.get(st.session_state.selected_type, [])
-
     for idx, device in enumerate(devices):
         with columns[idx % 4]:
             st.write(f"**{device['name']}**")
-            st.image(device["image"], use_container_width=True)
+            if "image" in device and device["image"]:
+                st.image(device["image"], use_container_width=True)
+            else:
+                st.error("Kein Bild verfügbar.")
             col1, col2 = st.columns([1, 1])
             with col1:
                 status_color = "green" if device["status"] == "Aktiv" else ("red" if device["status"] == "Inaktiv" else "orange")
@@ -88,25 +178,32 @@ if st.session_state.selected_device is None:
         with columns[len(devices) % 4]:
             st.write("Neue Maschine")
             st.image("https://i.otto.de/i/otto/996e0c7d-bc6e-4488-a30d-4863ff34b252/nintendo-nachttischlampe-super-mario-kart-fragezeichen-question-block-leuchte-lampe.jpg?$formatz$", use_container_width=True)
-            st.button("+ Hinzufügen", key="add_device")
+            if st.button("+ Hinzufügen", key="add_device"):
+                st.session_state.adding_device = True
 else:
-    # Detailseite einer Maschine (Noch optimierungsbedarf... - Soukopf)
+    # Detailseite einer Maschine
     device = st.session_state.selected_device
     st.title(device["name"])
 
-    col1, col2 = st.columns([3, 1])
+    col1, col2 = st.columns([2, 2])
     with col1:
-        st.subheader("Reservierungen")
-        st.write("- 01.01.2023 bis 02.01.2023: Projekt A von Benutzer X")
-        st.write("- 03.01.2023 bis 04.01.2023: Projekt B von Benutzer Y")
-        st.subheader("Wartungen")
-        st.write("- 05.01.2023: Austausch von Teilen, Kosten: 100€")
-        st.write("- 10.01.2023: Allgemeine Überprüfung, Kosten: 50€")
+        st.subheader("Maschineninformationen")
+        st.write(f"**Typ:** {device.get('type', 'Nicht angegeben')}")
+        st.write(f"**Model:** {device.get('name', 'Nicht angegeben')}")
+        st.write(f"**Status:** {device.get('status', 'Nicht angegeben')}")
+        st.write(f"**Erstellungsdatum:** {device.get('creation_date', 'Nicht angegeben')}")
+        st.image(device["image"], use_container_width=True, width=20)
+
     with col2:
-        st.image(device["image"], use_container_width=True)
         st.subheader("Zuständiger Benutzer")
-        st.write("Max Mustermann")
-        st.image("https://brings-online.com/demo/wordpress-theme-lexus/wp-content/uploads/2021/11/lexus-max-mustermann.jpg", use_container_width=True)
+        responsible_user = user_db.search(User.name == device['responsible_person'])
+        if responsible_user:
+            user = responsible_user[0]
+            st.image(user['img_link'], use_container_width=True, width=20)
+            st.write(f"**Username:** {user.get('username', 'Nicht angegeben')}")
+            st.write(f"**Name:** {user.get('name', 'Nicht angegeben')}")
+        else:
+            st.write("Kein zuständiger Benutzer gefunden.")
 
     if st.session_state.user_role == "admin":
         if st.button("Bearbeiten"):
