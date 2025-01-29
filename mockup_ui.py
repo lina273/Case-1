@@ -1,3 +1,7 @@
+from Modules.reservations import add_reservation, get_reservations_by_device
+from Modules.maintenance import add_maintenance, get_maintenance_by_device
+
+
 import streamlit as st
 from tinydb import TinyDB, Query
 from Modules.serializer import db
@@ -181,9 +185,55 @@ elif st.session_state.selected_device is None:
             if st.button("+ Hinzufügen", key="add_device"):
                 st.session_state.adding_device = True
 else:
-    # Detailseite einer Maschine
-    device = st.session_state.selected_device
-    st.title(device["name"])
+   device = st.session_state.selected_device
+st.title(device["name"])
+
+# Reservierungen anzeigen
+st.subheader("📆 Reservierungen")
+reservations = get_reservations_by_device(device["id"])
+if reservations:
+    for res in reservations:
+        st.write(f"📅 {res['start_date']} bis {res['end_date']}: {res['user']}")
+else:
+    st.write("🔍 Keine Reservierungen für dieses Gerät.")
+
+# Neue Reservierung hinzufügen (nur Admins)
+if st.session_state.user_role == "admin":
+    st.subheader("➕ Neue Reservierung hinzufügen")
+    start_date = st.date_input("Startdatum")
+    end_date = st.date_input("Enddatum")
+    user = st.text_input("Reserviert von:")
+
+    if st.button("Reservierung speichern"):
+        if add_reservation(device["id"], user, str(start_date), str(end_date)):
+            st.success("✅ Reservierung erfolgreich gespeichert!")
+            st.rerun()
+        else:
+            st.error("⚠️ Fehler: Gerät ist bereits in diesem Zeitraum reserviert!")
+
+# Wartungen anzeigen
+st.subheader("🛠️ Wartungen")
+maintenances = get_maintenance_by_device(device["id"])
+if maintenances:
+    for m in maintenances:
+        st.write(f"🛠️ {m['maintenance_date']}: {m['description']}, Kosten: {m['cost']}€")
+else:
+    st.write("🔍 Keine geplanten Wartungen.")
+
+# Neue Wartung 
+if st.session_state.user_role == "admin":
+    st.subheader(" Neue Wartung hinzufügen")
+    maintenance_date = st.date_input("Wartungsdatum")
+    cost = st.number_input("Kosten (€)", min_value=0)
+    description = st.text_input("Beschreibung")
+
+    if st.button("Wartung speichern"):
+        add_maintenance(device["id"], str(maintenance_date), cost, description)
+        st.success("Wartung erfolgreich gespeichert!")
+        st.rerun()
+
+
+
 
     col1, col2 = st.columns([2, 2])
     with col1:
